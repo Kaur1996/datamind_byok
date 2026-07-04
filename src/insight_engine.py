@@ -71,5 +71,11 @@ def generate_insights(file_path):
     return response.text
 
 if __name__ == "__main__":
-    result = generate_insights("data/Superstore.csv")
+    # result = generate_insights("data/Superstore.csv")  # commented out to avoid API calls
+    # with open('data/cached_insights.json', 'w') as f:
+    #     f.write(result)
+    
+    # Load from cache instead
+    with open('data/cached_insights.json', 'r') as f:
+        result = f.read()
     print(result)

@@ -3,6 +3,11 @@ import json
 import tempfile
 import os
 from src.insight_engine import generate_insights
+from src.csv_processor import stats_processor
+from src.chart_engine import generate_chart_engine
+from src.chart_renderer import chart_render
+
+
 
 # ─── Page Configuration ───────────────────────────────────────────────────────
 # Sets the browser tab title and page layout
@@ -53,11 +58,10 @@ if uploaded_file is not None:
     # Show a spinner while the LLM generates insights
     # This prevents the user from thinking the app has frozen
     with st.spinner("Analyzing your data... this may take 20-30 seconds"):
-        result = generate_insights(tmp_path)
+        result =  generate_insights(tmp_path) 
 
-    # Clean up temporary file after pipeline is done
-    # Good practice to avoid filling up disk space
-    os.unlink(tmp_path)
+
+    stats = stats_processor(tmp_path)
 
     # ─── Parse LLM Response ───────────────────────────────────────────────────
     # LLM returns a JSON string — parse it into a Python dictionary
@@ -89,3 +93,19 @@ if uploaded_file is not None:
         # Handle cases where LLM returns malformed JSON
         st.error("Something went wrong parsing the insights. Please try again.")
         st.write(result)
+
+    try:
+        chart_jsn = generate_chart_engine(stats, result)
+        charts = chart_render(chart_jsn, tmp_path)
+
+        for fig in charts:
+            st.plotly_chart(fig, use_container_width=True)
+
+    except Exception as e:
+        st.error("Charts could not be rendered. Please try again.")
+        print(f"Charts could not be rederended due to {e}")
+    
+
+    # Clean up temporary file after pipeline is done
+    # Good practice to avoid filling up disk space
+    os.unlink(tmp_path)
